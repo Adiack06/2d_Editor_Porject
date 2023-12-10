@@ -1,6 +1,7 @@
 import pygame
 from pygame import gfxdraw
 import math
+import csv
 
 # pygame setup
 pygame.init()
@@ -37,13 +38,15 @@ class Triangle:
         self.color = color
 
     def draw(self, screen):
-        vertices = (self.points[0].center, (self.points[1].center), (self.points[2].center)) #((x1,y1),(x2,y2),(x3,y3))
+        vertices = ((self.points[0].center), (self.points[1].center), (self.points[2].center)) #((x1,y1),(x2,y2),(x3,y3))
         pygame.gfxdraw.filled_polygon(screen, vertices, self.color)
         self.points[0].draw(screen, (100, 0, 0))
         self.points[1].draw(screen, (100, 0, 0))
         self.points[2].draw(screen, (100, 0, 0))
-
-
+    def csvify(self):
+        x1,y1,x2,y2,x3,y3= (self.points[0].center[0],self.points[0].center[1],self.points[1].center[0],self.points[1].center[1],self.points[2].center[0],self.points[2].center[1],)  # ((x1,y1),(x2,y2),(x3,y3))
+        r,g,b = self.color
+        return(x1,y1,x2,y2,x3,y3,r,g,b)
 tris = []
 mpoints = []
 mouse3Down = False
@@ -57,6 +60,12 @@ while running:
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mpoints.append(Point(event.pos))
             print("point added")
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 2:
+            with open("map.csv", 'w', newline='') as csvfile:
+                csvwriter = csv.writer(csvfile)
+                csvwriter.writerow(['x1', 'y1', 'x2', 'y2', 'x3', 'y3', 'r', 'g', 'b'])
+                for tri in tris:
+                    csvwriter.writerow(tri.csvify())
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             mouse3Down = True
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 3:
@@ -76,11 +85,8 @@ while running:
 
     for point in mpoints:
         point.draw(screen,(255,0,0))
-        if point.touching(pygame.mouse.get_pos()) == True:
-            print("touched")
     for tri in tris:
         tri.draw(screen)
-
     # Rendering
     pygame.display.flip()
 
