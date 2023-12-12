@@ -33,7 +33,7 @@ class Point:
         return False
 
 class Triangle:
-    def __init__(self, points, color = (255,255,255)):
+    def __init__(self, points, color):
         self.points = [Point(point) for point in points]
         self.color = color
 
@@ -43,10 +43,19 @@ class Triangle:
         self.points[0].draw(screen, (100, 0, 0))
         self.points[1].draw(screen, (100, 0, 0))
         self.points[2].draw(screen, (100, 0, 0))
-    def csvify(self):
+    def csvexport(self):
         x1,y1,x2,y2,x3,y3= (self.points[0].center[0],self.points[0].center[1],self.points[1].center[0],self.points[1].center[1],self.points[2].center[0],self.points[2].center[1],)  # ((x1,y1),(x2,y2),(x3,y3))
         r,g,b = self.color
         return(x1,y1,x2,y2,x3,y3,r,g,b)
+    def csvimport(entry):
+        x1, y1, x2, y2, x3, y3, r, g, b = map(int, entry)
+        tripoints = [
+            Point((x1, y1)),
+            Point((x2, y2)),
+            Point((x3, y3))
+        ]
+        tris.append(Triangle(tripoints,(r,g,b)))
+
 tris = []
 mpoints = []
 mouse3Down = False
@@ -55,8 +64,13 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        #if event.type == pygame.KEYDOWN:
-
+        if event.type == pygame.KEYDOWN:
+            if event.mod & pygame.KMOD_CTRL and event.key == pygame.K_i:
+                with open("map.csv", 'r', newline='') as csvfile:
+                    csv_reader = csv.reader(csvfile)
+                    next(csv_reader)
+                    for row in csv_reader:
+                        Triangle.csvimport(row)
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mpoints.append(Point(event.pos))
             print("point added")
@@ -65,7 +79,7 @@ while running:
                 csvwriter = csv.writer(csvfile)
                 csvwriter.writerow(['x1', 'y1', 'x2', 'y2', 'x3', 'y3', 'r', 'g', 'b'])
                 for tri in tris:
-                    csvwriter.writerow(tri.csvify())
+                    csvwriter.writerow(tri.csvexport())
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             mouse3Down = True
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 3:
@@ -79,7 +93,7 @@ while running:
             pass
 
     if len(mpoints) >= 3:
-        tris.append(Triangle(mpoints))
+        tris.append(Triangle(mpoints,(255,255,255)))
         print("Triangle added")
         mpoints = []
 
