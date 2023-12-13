@@ -2,10 +2,11 @@ import pygame
 from pygame import gfxdraw
 import math
 import csv
-
 # pygame setup
 pygame.init()
 screen = pygame.display.set_mode((1280, 720))
+clock = pygame.time.Clock()
+fps = 60
 running = True
 
 
@@ -31,12 +32,33 @@ class Point:
         if math.sqrt((collideeX - centerX) ** 2 + (collideeY - centerY) ** 2) <= self.radius:
             return True
         return False
-class ColorsSelector:
-    def __init__(self, color , value,location):
-        self.color = color
-        self.value = value
-        self.location = location
+    def touched(self,event):
+        if "mouse3Down" in heldbuttons:
+            point.center = (event.pos)
 
+class vslider:
+    def __init__(self, state, location, length, width, range): #locatoin is top middle
+        self.state = state
+        self.location = location
+        self.length = length
+        self.width = width
+        self.range = range
+    #TODO make draw function
+    def draw(self,screen):
+        sliderX ,sliderY = self.location
+        sliderX-= self.width/2
+        pygame.draw.rect(screen,(100,100,100), (sliderX, sliderY, 20, self.length), self.width)
+        pygame.draw.circle(screen, (200,200,200), self.handleLocation(), ((self.width+(self.width*self.state)/2)))
+    def touching(self, collidee):
+        centerX, centerY = self.handleLocation()
+        collideeX, collideeY = collidee
+        # TODO for the body of it
+        if math.sqrt((collideeX - centerX) ** 2 + (collideeY - centerY) ** 2) <= self.radius:
+            return True
+        return False
+    def handleLocation(self):
+        topX,topY = self.location
+        return (topX,(topY+(self.length-(self.length*self.state))))
 class Polygon:
     def __init__(self, points, color):
         self.points = [Point(point) for point in points]
@@ -48,10 +70,12 @@ class Polygon:
         for point in self.points:
             point.draw(screen, (100, 0, 0))
     def csvexport(self):
+        # TODO make poly export
         x1,y1,x2,y2,x3,y3= (self.points[0].center[0],self.points[0].center[1],self.points[1].center[0],self.points[1].center[1],self.points[2].center[0],self.points[2].center[1],)  # ((x1,y1),(x2,y2),(x3,y3))
         r,g,b = self.color
         return(x1,y1,x2,y2,x3,y3,r,g,b)
     def csvimport(entry):
+        #TODO make poly import
         x1, y1, x2, y2, x3, y3, r, g, b = map(int, entry)
         tripoints = [
             Point((x1, y1)),
@@ -59,12 +83,15 @@ class Polygon:
             Point((x3, y3))
         ]
         polys.append(Polygon(tripoints, (r, g, b)))
-
+#TODO make ui
+ui=[]
+ui.append(vslider(0,(100,100),200,20,255))
 polys = []
 mpoints = []
-mouse3Down = False
+heldbuttons=[]
 while running:
     screen.fill((0, 0, 0))
+    # Input
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -89,22 +116,23 @@ while running:
                 for poly in polys:
                     csvwriter.writerow(poly.csvexport())
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-            mouse3Down = True
+            heldbuttons.append("mouse3Down")
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 3:
-            mouse3Down = False
-        if mouse3Down:
-            for poly in polys:
-                for point in poly.points:
-                    if point.touching(pygame.mouse.get_pos()) == True:
-                        print("hi")
-                        point.center = (event.pos)
-            pass
+            heldbuttons.remove("mouse3Down")
+        for poly in polys:
+            for point in poly.points:
+                if point.touching(pygame.mouse.get_pos()) == True:
+                    point.touched(event)
+        #for element in ui:
+            #if element.touching(pygame.mouse.get_pos()) == True:
 
+    # Rendering
     for point in mpoints:
         point.draw(screen,(255,0,0))
     for poly in polys:
         poly.draw(screen)
-    # Rendering
+    for element in ui:
+        element.draw(screen)
     pygame.display.flip()
-
+    clock.tick(fps)
 pygame.quit()
