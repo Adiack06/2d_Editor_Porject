@@ -43,19 +43,36 @@ class vslider:
         self.length = length
         self.width = width
         self.range = range
-    #TODO make draw function
     def draw(self,screen):
         sliderX ,sliderY = self.location
         sliderX-= self.width/2
         pygame.draw.rect(screen,(100,100,100), (sliderX, sliderY, 20, self.length), self.width)
         pygame.draw.circle(screen, (200,200,200), self.handleLocation(), ((self.width+(self.width*self.state)/2)))
     def touching(self, collidee):
-        centerX, centerY = self.handleLocation()
         collideeX, collideeY = collidee
-        # TODO for the body of it
-        if math.sqrt((collideeX - centerX) ** 2 + (collideeY - centerY) ** 2) <= self.radius:
+        #handle
+        centerX, centerY = self.handleLocation()
+        if math.sqrt((collideeX - centerX) ** 2 + (collideeY - centerY) ** 2) <= ((self.width+(self.width*self.state)/2)):
+            return True
+        #slider
+        sliderTX, sliderTY = self.location
+        sliderTX -= self.width / 2
+        sliderBX = sliderTX + self.width
+        sliderBY = sliderTY - self.length
+        print(f"{sliderTX,sliderTY}-{sliderBX,sliderBY}")
+        if sliderTX <= collideeX <= sliderBX and sliderTY <= collideeY <= sliderBY:
             return True
         return False
+    def touched(self,event):
+
+        if "mouse3Down" in heldbuttons:
+            print("hi")
+            handleX, handleY = self.handleLocation()
+            mouseX,mouseY = (event.pos)
+            differnce = mouseY - handleY
+            self.state = 1 - (mouseY - self.location[1]) / self.length
+            self.state = max(0, min(1, self.state))
+
     def handleLocation(self):
         topX,topY = self.location
         return (topX,(topY+(self.length-(self.length*self.state))))
@@ -123,8 +140,9 @@ while running:
             for point in poly.points:
                 if point.touching(pygame.mouse.get_pos()) == True:
                     point.touched(event)
-        #for element in ui:
-            #if element.touching(pygame.mouse.get_pos()) == True:
+        for element in ui:
+            if element.touching(pygame.mouse.get_pos()) == True:
+                element.touched(event)
 
     # Rendering
     for point in mpoints:
