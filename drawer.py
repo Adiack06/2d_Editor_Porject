@@ -1,6 +1,5 @@
 import pygame
 from pygame import gfxdraw
-import math
 import csv
 # pygame setup
 pygame.init()
@@ -8,7 +7,6 @@ screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
 fps = 60
 running = True
-
 
 class Point:
     def __init__(self, center, radius=10):
@@ -36,7 +34,7 @@ class Point:
         if "mouse3Down" in heldbuttons:
             point.center = (event.pos)
 
-class vslider:
+class Vslider:
     def __init__(self, state, location, length, width, range): #locatoin is top middle
         self.state = state
         self.location = location
@@ -88,9 +86,12 @@ class Polygon:
             point.draw(screen, (100, 0, 0))
     def csvexport(self):
         # TODO make poly export
-        x1,y1,x2,y2,x3,y3= (self.points[0].center[0],self.points[0].center[1],self.points[1].center[0],self.points[1].center[1],self.points[2].center[0],self.points[2].center[1],)  # ((x1,y1),(x2,y2),(x3,y3))
+        data = ""
+        for point in self.points:
+            x, y = point.center
+            data += f"{x},{y},"
         r,g,b = self.color
-        return(x1,y1,x2,y2,x3,y3,r,g,b)
+        return(data,r,g,b)
     def csvimport(entry):
         #TODO make poly import
         x1, y1, x2, y2, x3, y3, r, g, b = map(int, entry)
@@ -100,9 +101,13 @@ class Polygon:
             Point((x3, y3))
         ]
         polys.append(Polygon(tripoints, (r, g, b)))
+
 #TODO make ui
 ui=[]
-ui.append(vslider(0,(100,100),200,20,255))
+ui.append(Vslider(0, (100, 100), 200, 20, 255))
+ui.append(Vslider(0, (200, 100), 200, 20, 255))
+ui.append(Vslider(0, (300, 100), 200, 20, 255))
+color = (255,255,255)
 polys = []
 mpoints = []
 heldbuttons=[]
@@ -120,17 +125,18 @@ while running:
                     for row in csv_reader:
                         Polygon.csvimport(row)
             if event.mod & pygame.KMOD_CTRL and event.key == pygame.K_SPACE:
-                polys.append(Polygon(mpoints, (255, 255, 255)))
-                print("Polygon added")
-                mpoints = []
+                if len(mpoints) > 2:
+                    polys.append(Polygon(mpoints, color))
+                    print("Polygon added")
+                    mpoints = []
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mpoints.append(Point(event.pos))
             print("point added")
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 2:
             with open("map.csv", 'w', newline='') as csvfile:
                 csvwriter = csv.writer(csvfile)
-                csvwriter.writerow(['x1', 'y1', 'x2', 'y2', 'x3', 'y3', 'r', 'g', 'b'])
                 for poly in polys:
+
                     csvwriter.writerow(poly.csvexport())
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             heldbuttons.append("mouse3Down")
